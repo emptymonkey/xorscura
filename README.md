@@ -6,7 +6,7 @@ A tool for string obfuscation using xor.
 
 A quick tool for generating the hex codes for a key and cyphertext that when xor'd reveal your string.
 
-##
+## Why?
 
 To defeat a quick "strings" analysis of your binary. 
 
