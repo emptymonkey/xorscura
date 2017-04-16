@@ -32,8 +32,8 @@ void usage(){
 }
 
 // returns the size of the newly malloc()d bin, or -1 on error.
-int ps2bin(char *ps, char **bin);
-int fill_from_stdin(char **bin);
+int ps2bin(char *ps, unsigned char **bin);
+int fill_from_stdin(unsigned char **bin);
 
 
 int main(int argc, char **argv){
@@ -256,13 +256,14 @@ int main(int argc, char **argv){
 	}
 
 	xorscura_free_xod(data);
+	free(data);
 	data = NULL;
 
 	return(0);
 }
 
 
-int ps2bin(char *ps, char **bin){
+int ps2bin(char *ps, unsigned char **bin){
 
 	int count;
 	int i;
@@ -278,7 +279,7 @@ int ps2bin(char *ps, char **bin){
 	}
 	count /= 2;
 
-	if((*bin = (char *) malloc(count)) == NULL){
+	if((*bin = (unsigned char *) malloc(count)) == NULL){
 		fprintf(stderr, "ps2bin(): malloc(%d)", count);
 		return(-1);
 	}
@@ -291,7 +292,7 @@ int ps2bin(char *ps, char **bin){
 	return(count);
 }
 
-int fill_from_stdin(char **bin){
+int fill_from_stdin(unsigned char **bin){
 
 	long pagesize;
 	size_t buffer_pages;
@@ -303,7 +304,7 @@ int fill_from_stdin(char **bin){
 		fprintf(stderr, "fill_from_stdin(): sysconf(_SC_PAGESIZE)");
 	}
 
-	if((*bin = (char *) malloc(pagesize)) == NULL){
+	if((*bin = (unsigned char *) malloc(pagesize)) == NULL){
 		fprintf(stderr, "fill_from_stdin(): malloc(%ld)", pagesize);
 	}
 	buffer_pages = 1;

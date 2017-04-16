@@ -16,15 +16,15 @@
 #define PRNG_STATELEN 256
 
 // Uncomment to enable verbose error messages.
-#define DEBUG
+//#define DEBUG
 
 // xorscura object data
 struct xod {
 	
 	size_t buf_count;	
-	char *plaintext_buf;
-	char *key_buf;
-	char *ciphertext_buf;
+	unsigned char *plaintext_buf;
+	unsigned char *key_buf;
+	unsigned char *ciphertext_buf;
 
 	unsigned int seed;
 

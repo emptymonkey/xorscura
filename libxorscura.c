@@ -57,27 +57,28 @@ int xorscura_encrypt(struct xod *data){
 	seed_count += retval;
 	close(tmp_fd);
 
-	if((data->ciphertext_buf = (char *) malloc(data->buf_count)) == NULL){
+	if((data->ciphertext_buf = (unsigned char *) malloc(data->buf_count)) == NULL){
 #ifdef DEBUG
 		fprintf(stderr, "xorscura_encrypt(): malloc(%d)\n", (int) data->buf_count);
 #endif
 		return(-1);
 	}
 
-  if((data->key_buf = (char *) malloc(data->buf_count)) == NULL){
+  if((data->key_buf = (unsigned char *) malloc(data->buf_count)) == NULL){
 #ifdef DEBUG
 		fprintf(stderr, "xorscura_encrypt(): malloc(%d)\n", (int) data->buf_count);
 #endif
     return(-1);
   }
 
-	if((prng_buf = (struct random_data *) malloc(sizeof(struct random_data))) == NULL){
+	if((prng_buf = (struct random_data *) calloc(1, sizeof(struct random_data))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_encrypt(): malloc(%d)\n", (int) sizeof(struct random_data));
+		fprintf(stderr, "xorscura_encrypt(): calloc(1, %d)\n", (int) sizeof(struct random_data));
 #endif
     return(-1);
 	}
 
+	memset(prng_state, '\0', PRNG_STATELEN);
 	if(initstate_r(data->seed, prng_state, PRNG_STATELEN, prng_buf) == -1){
 #ifdef DEBUG
 		fprintf(stderr, "xorscura_encrypt(): initstate_r(0x%x, %lx, %d, %lx)\n", data->seed, (unsigned long) prng_state, PRNG_STATELEN, (unsigned long) prng_buf);
@@ -126,9 +127,11 @@ int xorscura_decrypt(struct xod *data){
 		return(xorscura_decrypt_prng(data));
 	}
 
-	if((data->plaintext_buf = (char *) malloc(data->buf_count)) == NULL){
+	// Making the plaintext buf one char bigger because the common case will be a string. This allows for implicit null termination.
+	// As a result, most of the string functions should work fine against the resulting plaintext.
+	if((data->plaintext_buf = (unsigned char *) calloc(data->buf_count + 1, sizeof(char))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_decrypt(): malloc(%d)\n", (int) data->buf_count);
+		fprintf(stderr, "xorscura_decrypt(): malloc(%d, %d)\n", (int) data->buf_count + 1, (int) sizeof(char));
 #endif
 		return(-1);
 	}
@@ -142,6 +145,7 @@ int xorscura_decrypt(struct xod *data){
 
 
 int xorscura_compare(struct xod *data){
+
 
 	int i;
 
@@ -177,20 +181,21 @@ int xorscura_decrypt_prng(struct xod *data){
 	char *prng_result_ptr = (char *) &prng_result;
 
 
-	if((data->plaintext_buf = (char *) malloc(data->buf_count)) == NULL){
+	if((data->plaintext_buf = (unsigned char *) malloc(data->buf_count)) == NULL){
 #ifdef DEBUG
 		fprintf(stderr, "xorscura_decrypt_prng(): malloc(%d)\n", (int) data->buf_count);
 #endif
 		return(-1);
 	}
 
-	if((prng_buf = (struct random_data *) malloc(sizeof(struct random_data))) == NULL){
+	if((prng_buf = (struct random_data *) calloc(1, sizeof(struct random_data))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_decrypt_prng(): malloc(%d)\n", (int) sizeof(struct random_data));
+		fprintf(stderr, "xorscura_decrypt_prng(): calloc(1, %d)\n", (int) sizeof(struct random_data));
 #endif
 		return(-1);
 	}
 
+	memset(prng_state, '\0', PRNG_STATELEN);
 	if(initstate_r(data->seed, prng_state, PRNG_STATELEN, prng_buf) == -1){
 #ifdef DEBUG
 		fprintf(stderr, "xorscura_decrypt_prng(): initstate_r(0x%x, %lx, %d, %lx)\n", data->seed, (unsigned long) prng_state, PRNG_STATELEN, (unsigned long) prng_buf);
@@ -224,6 +229,7 @@ int xorscura_decrypt_prng(struct xod *data){
 
 
 int xorscura_compare_prng(struct xod *data){
+
 	int i;
 
 	size_t key_count;
@@ -234,13 +240,15 @@ int xorscura_compare_prng(struct xod *data){
 	char *prng_result_ptr = (char *) &prng_result;
 
 
-	if((prng_buf = (struct random_data *) malloc(sizeof(struct random_data))) == NULL){
+	if((prng_buf = (struct random_data *) calloc(1, sizeof(struct random_data))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_compare_prng(): malloc(%d)\n", (int) sizeof(struct random_data));
+		fprintf(stderr, "xorscura_compare_prng(): calloc(1, %d)\n", (int) sizeof(struct random_data));
 #endif
 		return(-1);
 	}
 
+
+	memset(prng_state, '\0', PRNG_STATELEN);
 	if(initstate_r(data->seed, prng_state, PRNG_STATELEN, prng_buf) == -1){
 #ifdef DEBUG
 		fprintf(stderr, "xorscura_compare_prng(): initstate_r(0x%x, %lx, %d, %lx)\n", data->seed, (unsigned long) prng_state, PRNG_STATELEN, (unsigned long) prng_buf);
@@ -258,7 +266,9 @@ int xorscura_compare_prng(struct xod *data){
 		}
 
 		for(i = 0; i < (int) sizeof(int32_t); i++){
-			if(data->plaintext_buf[key_count] != (data->ciphertext_buf[key_count] ^ prng_result_ptr[i])){
+			char tmp_char = (data->ciphertext_buf[key_count] ^ prng_result_ptr[i]);
+			if((data->plaintext_buf[key_count]) != tmp_char){
+				free(prng_buf);
 				return(1);
 			}
 			key_count++;
@@ -274,6 +284,8 @@ int xorscura_compare_prng(struct xod *data){
 	return(0);
 }
 
+
+// Free's the internal structures. Does not free the xod itself, as that may be on the stack.
 void xorscura_free_xod(struct xod *data){
 
 	/*
@@ -305,6 +317,5 @@ void xorscura_free_xod(struct xod *data){
 		data->ciphertext_buf = NULL;
 	}
 
-	free(data);
 }
 
