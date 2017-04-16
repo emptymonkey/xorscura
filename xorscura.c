@@ -5,11 +5,12 @@
 
 void usage(){
 
-	fprintf(stderr, "usage(): %s [-e|-d|-x|-h] [-p PLAINTEXT] [-c CIPHERTEXT] [-k KEY] [-s SEED]\n", program_invocation_short_name);
+	fprintf(stderr, "usage(): %s [-e|-d|-x|-h] [-C] [-p PLAINTEXT] [-c CIPHERTEXT] [-k KEY] [-s SEED]\n", program_invocation_short_name);
 	fprintf(stderr, "\t-e\t:\tEncrypt. (Requires PLAINTEXT and KEY.)\n");
 	fprintf(stderr, "\t-d\t:\tDecrypt. (Requires CIPHERTEXT and KEY.)\n");
 	fprintf(stderr, "\t-x\t:\tCompare. (Requires PLAINTEXT, CIPHERTEXT, and KEY.)\n");
 	fprintf(stderr, "\t-h\t:\tHelp!\n");
+	fprintf(stderr, "\t-C\t:\tOutput as a C style byte array.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Purpose: Useful tool / library for obscuring strings in your binaries with the help of xor.\n");
 	fprintf(stderr, "\n");
@@ -49,13 +50,22 @@ int main(int argc, char **argv){
 #define COMPARE	2
 	unsigned int operation = ENCRYPT;
 
+#define PS_STYLE 0
+#define C_STYLE 1
+	int output = PS_STYLE;
+
+	char *open_str;
+	char *close_str;
+	char *numeric_str;
+	char *separating_str;
+
 	char *cli_plaintext = NULL;
 	char *cli_ciphertext = NULL;
 	char *cli_key = NULL;
 	char *cli_seed = NULL;
 
 
-	while((opt = getopt(argc, argv, "edxhp:c:k:s:")) != -1){
+	while((opt = getopt(argc, argv, "edxhCp:c:k:s:")) != -1){
 		switch (opt){
 			case 'h':
 				usage();
@@ -75,6 +85,10 @@ int main(int argc, char **argv){
 					usage();
 				}
 				operation = COMPARE;
+				break;
+
+			case 'C':
+				output = C_STYLE;
 				break;
 
 			case 'p':
@@ -97,14 +111,6 @@ int main(int argc, char **argv){
 				usage();
 		}
 	}
-
-/*
-	printf("DEBUG: operation: %d\n", operation);
-	printf("DEBUG: cli_plaintext: %s\n", cli_plaintext);
-	printf("DEBUG: cli_ciphertext: %s\n", cli_ciphertext);
-	printf("DEBUG: cli_key: %s\n", cli_key);
-	printf("DEBUG: cli_seed: %s\n", cli_seed);
-*/
 
 
 	if((data = (struct xod *) calloc(1, sizeof(struct xod))) == NULL){
@@ -178,29 +184,51 @@ int main(int argc, char **argv){
 
 
 	if(operation == ENCRYPT){
+
+		open_str = "";
+		close_str = "";
+		numeric_str = "";
+		separating_str = "";
+
+		if(output == C_STYLE){
+			open_str = "{";
+			close_str = "}";
+			numeric_str = "0x";
+			separating_str = ",";
+		}
+
 		if(xorscura_encrypt(data) == -1){
 			error(-1, errno, "xorscura_encrypt(%lx)", (unsigned long) data);
 		}
 
-		printf("plaintext: ");
+		printf("plaintext: %s", open_str);
 		for(i = 0; i < (int) data->buf_count; i++){
-			printf("%02x", (unsigned int) (unsigned char) data->plaintext_buf[i]);
+			if(i){
+				printf("%s", separating_str);
+			}
+			printf("%s%02x", numeric_str, (unsigned int) (unsigned char) data->plaintext_buf[i]);
 		}
-		printf("\n");
+		printf("%s\n", close_str);
 
 		printf("seed: %u\n", data->seed);
 
-		printf("key: ");
+		printf("key: %s", open_str);
 		for(i = 0; i < (int) data->buf_count; i++){
-			printf("%02x", (unsigned int) (unsigned char) data->key_buf[i]);
+      if(i){
+        printf("%s", separating_str);
+      }
+			printf("%s%02x", numeric_str, (unsigned int) (unsigned char) data->key_buf[i]);
 		}
-		printf("\n");
+		printf("%s\n", close_str);
 
-		printf("cipher: ");
+		printf("cipher: %s", open_str);
 		for(i = 0; i < (int) data->buf_count; i++){
-			printf("%02x", (unsigned int) (unsigned char) data->ciphertext_buf[i]);
+      if(i){
+        printf("%s", separating_str);
+      }
+			printf("%s%02x", numeric_str, (unsigned int) (unsigned char) data->ciphertext_buf[i]);
 		}
-		printf("\n");
+		printf("%s\n", close_str);
 
 	}else if(operation == DECRYPT){
 		if(xorscura_decrypt(data) == -1){
