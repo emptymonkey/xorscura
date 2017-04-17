@@ -18,6 +18,10 @@
 // Uncomment to enable verbose error messages.
 //#define DEBUG
 
+#define ALLOC_PLAINTEXT	1
+#define ALLOC_CIPHERTEXT	2
+#define ALLOC_KEY	4
+
 // xorscura object data
 struct xod {
 	
@@ -27,6 +31,10 @@ struct xod {
 	unsigned char *ciphertext_buf;
 
 	unsigned int seed;
+
+	// Used to track what has been malloc()d by libxorscura. If you malloc it, it's up to you to manage that.
+	// Or flip this flag, then we'll free() the memory in xorscura_free_xod().
+	unsigned char alloc_flag;
 
 };
 

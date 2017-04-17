@@ -57,19 +57,21 @@ int xorscura_encrypt(struct xod *data){
 	seed_count += retval;
 	close(tmp_fd);
 
-	if((data->ciphertext_buf = (unsigned char *) malloc(data->buf_count)) == NULL){
+	if((data->ciphertext_buf = (unsigned char *) calloc(data->buf_count, sizeof(char))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_encrypt(): malloc(%d)\n", (int) data->buf_count);
+		fprintf(stderr, "xorscura_encrypt(): calloc(%d, %d)\n", (int) data->buf_count, (int)sizeof(char));
 #endif
 		return(-1);
 	}
+	data->alloc_flag |= ALLOC_CIPHERTEXT;
 
-  if((data->key_buf = (unsigned char *) malloc(data->buf_count)) == NULL){
+  if((data->key_buf = (unsigned char *) calloc(data->buf_count, sizeof(char))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_encrypt(): malloc(%d)\n", (int) data->buf_count);
+		fprintf(stderr, "xorscura_encrypt(): calloc(%d, %d)\n", (int) data->buf_count, (int) sizeof(char));
 #endif
     return(-1);
   }
+	data->alloc_flag |= ALLOC_KEY;
 
 	if((prng_buf = (struct random_data *) calloc(1, sizeof(struct random_data))) == NULL){
 #ifdef DEBUG
@@ -131,10 +133,11 @@ int xorscura_decrypt(struct xod *data){
 	// As a result, most of the string functions should work fine against the resulting plaintext.
 	if((data->plaintext_buf = (unsigned char *) calloc(data->buf_count + 1, sizeof(char))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_decrypt(): malloc(%d, %d)\n", (int) data->buf_count + 1, (int) sizeof(char));
+		fprintf(stderr, "xorscura_decrypt(): calloc(%d, %d)\n", (int) data->buf_count + 1, (int) sizeof(char));
 #endif
 		return(-1);
 	}
+	data->alloc_flag |= ALLOC_PLAINTEXT;
 
 	for(i = 0; i < (int) data->buf_count; i++){
 		data->plaintext_buf[i] = data->ciphertext_buf[i] ^ data->key_buf[i];
@@ -181,12 +184,13 @@ int xorscura_decrypt_prng(struct xod *data){
 	char *prng_result_ptr = (char *) &prng_result;
 
 
-	if((data->plaintext_buf = (unsigned char *) malloc(data->buf_count)) == NULL){
+	if((data->plaintext_buf = (unsigned char *) calloc(data->buf_count + 1, sizeof(char))) == NULL){
 #ifdef DEBUG
-		fprintf(stderr, "xorscura_decrypt_prng(): malloc(%d)\n", (int) data->buf_count);
+		fprintf(stderr, "xorscura_decrypt_prng(): calloc(%d, %d)\n", (int) data->buf_count + 1, sizeof(char));
 #endif
 		return(-1);
 	}
+	data->alloc_flag |= ALLOC_PLAINTEXT;
 
 	if((prng_buf = (struct random_data *) calloc(1, sizeof(struct random_data))) == NULL){
 #ifdef DEBUG
@@ -289,33 +293,47 @@ int xorscura_compare_prng(struct xod *data){
 void xorscura_free_xod(struct xod *data){
 
 	/*
-		 struct xod {
 
-		 size_t buf_count;
-		 char *plaintext_buf;
-		 char *key_buf;
-		 char *ciphertext_buf;
+#define ALLOC_PLAINTEXT 1
+#define ALLOC_CIPHERTEXT  2
+#define ALLOC_KEY 4
 
-		 unsigned int seed;
+	// xorscura object data
+	struct xod {
 
-		 };
+		size_t buf_count;
+		unsigned char *plaintext_buf;
+		unsigned char *key_buf;
+		unsigned char *ciphertext_buf;
+
+		unsigned int seed;
+
+		unsigned char alloc_flag;
+
+	};
 
 	 */
 
-	if(data->plaintext_buf){
+	if(data->alloc_flag & ALLOC_PLAINTEXT){
 		free(data->plaintext_buf);
-		data->plaintext_buf = NULL;
+		data->alloc_flag &= !ALLOC_PLAINTEXT;
 	}
+	data->plaintext_buf = NULL;
 
-	if(data->key_buf){
-		free(data->plaintext_buf);
-		data->key_buf = NULL;
+	if(data->alloc_flag & ALLOC_CIPHERTEXT){
+		free(data->ciphertext_buf);
+		data->alloc_flag &= !ALLOC_CIPHERTEXT;
 	}
+	data->ciphertext_buf = NULL;
 
-	if(data->ciphertext_buf){
-		free(data->plaintext_buf);
-		data->ciphertext_buf = NULL;
+	if(data->alloc_flag & ALLOC_KEY){
+		free(data->key_buf);
+		data->alloc_flag &= !ALLOC_KEY;
 	}
+	data->key_buf = NULL;
+
+	data->seed = 0;
+	data->buf_count = 0;
 
 }
 

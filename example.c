@@ -6,11 +6,6 @@
 #include "libxorscura.h"
 
 
-/* XXX 
-		ToDo:
-			- Fix free() inside xorscura_clear_xod() segfaulting on non heap. :(
-	 XXX */
-
 int main(){
 
 	struct xod *data;
@@ -76,8 +71,6 @@ cipher: {0x68,0x3d,0xfe,0x29,0x23,0x49,0xf8,0x39,0xa3,0x54,0xf3,0x42,0xd6,0x0d,0
 	// Print the prompt.
 	printf("%s", data->plaintext_buf);
 
-	data->key_buf = NULL;
-	data->ciphertext_buf = NULL;
 	xorscura_free_xod(data);
 
 #define TMP_BUF_SIZE 1024
@@ -109,10 +102,7 @@ cipher: {0x68,0x3d,0xfe,0x29,0x23,0x49,0xf8,0x39,0xa3,0x54,0xf3,0x42,0xd6,0x0d,0
 
 REPORT_RESULT:
 
-	data->ciphertext_buf = NULL;
-	data->plaintext_buf = NULL;
-	data->buf_count = 0;
-	data->seed = 0;
+	xorscura_free_xod(data);
 
 	if(result){
 		// failure
@@ -133,7 +123,6 @@ REPORT_RESULT:
 
 	printf("%s", data->plaintext_buf);
 
-	data->ciphertext_buf = NULL;
 	xorscura_free_xod(data);
 	free(data);
 
