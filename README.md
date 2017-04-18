@@ -2,7 +2,7 @@
 
 A tool for simplifying string obfuscation with xor.
 
-_xorscura_ is the command line wrapper for _libxorscura_. This is useful for hiding the true nature of an executable.
+_xorscura_ is the command line wrapper for _libxorscura_.
 
 ## _libxorscura_
 
