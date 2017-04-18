@@ -1,4 +1,31 @@
 
+/**********************************************************************************************************************
+ *
+ * xorscura
+ *
+ *	@emptymonkey
+ *	2017-04-17
+ *
+ *	A tool to simplify string obfuscation with xor.
+ *	This is the cli frontend for the libxorscura library.
+ *
+ *
+ *	Example:
+ *
+ *		empty@monkey:~$ echo "hello, world" | xorscura 
+ *		plaintext: 68656c6c6f2c20776f726c640a
+ *		seed: 2081836537
+ *		key: a95b2c261058ce0260cb63138c
+ *		cipher: c13e404a7f74ee750fb90f7786
+ *
+ *		empty@monkey:~$ xorscura -d -c c13e404a7f74ee750fb90f7786 -k a95b2c261058ce0260cb63138c
+ *		hello, world
+ *
+ *		empty@monkey:~$ xorscura -d -c c13e404a7f74ee750fb90f7786 -s 2081836537
+ *		hello, world
+ *
+ **********************************************************************************************************************/
+
 
 #include "libxorscura.h"
 
@@ -31,9 +58,11 @@ void usage(){
 
 }
 
+
 // returns the size of the newly malloc()d bin, or -1 on error.
 int ps2bin(char *ps, unsigned char **bin);
 int fill_from_stdin(unsigned char **bin);
+
 
 
 int main(int argc, char **argv){
@@ -112,7 +141,7 @@ int main(int argc, char **argv){
 		}
 	}
 
-
+	// Initialize and fill out the appropriate buffers.
 	if((data = (struct xod *) calloc(1, sizeof(struct xod))) == NULL){
 		error(-1, errno, "calloc(1, %ld)", sizeof(struct xod));
 	}
@@ -130,7 +159,6 @@ int main(int argc, char **argv){
 			}
 			data->buf_count = (size_t) retval;
 		}
-
 	}
 
 	// Both DECRYPT and COMPARE will need CIPHERTEXT and KEY (or SEED).
@@ -197,10 +225,12 @@ int main(int argc, char **argv){
 			separating_str = ",";
 		}
 
+		// Encrypt.
 		if(xorscura_encrypt(data) == -1){
 			error(-1, errno, "xorscura_encrypt(%lx)", (unsigned long) data);
 		}
 
+		// Report.
 		printf("plaintext: %s", open_str);
 		for(i = 0; i < (int) data->buf_count; i++){
 			if(i){
@@ -214,40 +244,42 @@ int main(int argc, char **argv){
 
 		printf("key: %s", open_str);
 		for(i = 0; i < (int) data->buf_count; i++){
-      if(i){
-        printf("%s", separating_str);
-      }
+			if(i){
+				printf("%s", separating_str);
+			}
 			printf("%s%02x", numeric_str, (unsigned int) (unsigned char) data->key_buf[i]);
 		}
 		printf("%s\n", close_str);
 
 		printf("cipher: %s", open_str);
 		for(i = 0; i < (int) data->buf_count; i++){
-      if(i){
-        printf("%s", separating_str);
-      }
+			if(i){
+				printf("%s", separating_str);
+			}
 			printf("%s%02x", numeric_str, (unsigned int) (unsigned char) data->ciphertext_buf[i]);
 		}
 		printf("%s\n", close_str);
 
+
 	}else if(operation == DECRYPT){
+
+		// Decrypt.
 		if(xorscura_decrypt(data) == -1){
 			error(-1, errno, "xorscura_decrypt(%lx)", (unsigned long) data);
 		}
 
-		i = 0;
-		while((size_t) i != data->buf_count){
-			if((retval = write(STDOUT_FILENO, data->plaintext_buf, data->buf_count)) == -1){
-				error(-1, errno, "write(STDOUT_FILENO, %lx, %d)", (unsigned long) data->plaintext_buf, (int) data->buf_count);
-			}
-			i += retval;
-		}
+		// Report.
+		printf("%s", data->plaintext_buf);
+
 
 	}else if(operation == COMPARE){
+
+		// Compare.
 		if((retval = xorscura_compare(data)) == -1){
 			error(-1, errno, "xorscura_compare(%lx)", (unsigned long) data);
 		}
 
+		// Report.
 		if(retval){
 			printf("No match!\n");
 		}else{
@@ -255,6 +287,8 @@ int main(int argc, char **argv){
 		}
 	}
 
+	// We're at the end, so we don't need to free() this stuff, but I'd prefer to be verbose as this could 
+	// also be used as example code.
 	xorscura_free_xod(data);
 	free(data);
 	data = NULL;
@@ -263,6 +297,7 @@ int main(int argc, char **argv){
 }
 
 
+// Take the "postscript raw hex" format and turn it into a binary aray.
 int ps2bin(char *ps, unsigned char **bin){
 
 	int count;
@@ -292,6 +327,7 @@ int ps2bin(char *ps, unsigned char **bin){
 	return(count);
 }
 
+// Read plaintext from stdin.
 int fill_from_stdin(unsigned char **bin){
 
 	long pagesize;
