@@ -60,3 +60,6 @@ int xorscura_compare_prng(struct xod *data);
 // Clears out the xod data structure. Does not free the struct itself.
 void xorscura_free_xod(struct xod *data);
 
+// Prints values of the xod data structure.
+void xorscura_debug_xod(struct xod *data);
+

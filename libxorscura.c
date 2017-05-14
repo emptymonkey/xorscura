@@ -442,3 +442,43 @@ void xorscura_free_xod(struct xod *data){
 	data->buf_count = 0;
 
 }
+
+// Print DEBUG info about the xod structures.
+void xorscura_debug_xod(struct xod *data){
+
+	unsigned int i;
+
+  printf("DEBUG: xorscura_debug_xod(): alloc_flag: %d\n", data->alloc_flag);
+  printf("DEBUG: xorscura_debug_xod(): buf_count: %d\n", (int) data->buf_count);
+  printf("DEBUG: xorscura_debug_xod(): seed: %u\n", data->seed);
+
+	printf("DEBUG: xorscura_debug_xod(): plaintext_buf: %lx\n", (unsigned long) data->plaintext_buf);
+	if(data->plaintext_buf){
+		printf("DEBUG: xorscura_debug_xod(): *plaintext_buf: ");
+		for(i = 0; i < data->buf_count; i++){
+			printf("%02x", data->plaintext_buf[i]);
+		}
+		printf("\n");
+	}
+
+	printf("DEBUG: xorscura_debug_xod(): ciphertext_buf: %lx\n", (unsigned long) data->ciphertext_buf);
+	if(data->ciphertext_buf){
+		printf("DEBUG: xorscura_debug_xod(): *ciphertext_buf: ");
+		for(i = 0; i < data->buf_count; i++){
+			printf("%02x", data->ciphertext_buf[i]);
+		}
+		printf("\n");
+	}
+
+	printf("DEBUG: xorscura_debug_xod(): key_buf: %lx\n", (unsigned long) data->key_buf);
+	if(data->key_buf){
+		printf("DEBUG: xorscura_debug_xod(): *key_buf: ");
+		for(i = 0; i < data->buf_count; i++){
+			printf("%02x", data->key_buf[i]);
+		}
+		printf("\n");
+	}
+	
+}
+
+
