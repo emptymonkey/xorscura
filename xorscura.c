@@ -143,7 +143,7 @@ int main(int argc, char **argv){
 
 	// Initialize and fill out the appropriate buffers.
 	if((data = (struct xod *) calloc(1, sizeof(struct xod))) == NULL){
-		error(-1, errno, "calloc(1, %ld)", sizeof(struct xod));
+		error(-1, errno, "calloc(1, %d)", (int) sizeof(struct xod));
 	}
 
 	// Both ENCRYPT and COMPARE will need PLAINTEXT.

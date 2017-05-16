@@ -161,15 +161,8 @@ int xorscura_decrypt(struct xod *data){
 	int i;
 
 
-	if(!(data->seed || data->key_buf)){
-#ifdef DEBUG
-		fprintf(stderr, "xorscura_decrypt(): No key or seed provided.\n");
-#endif
-		return(-1);
-	}
-
 	// Check if we have the prng case, or straight xor of arrays.
-	if(data->seed){
+	if(!data->key_buf){
 		return(xorscura_decrypt_prng(data));
 	}
 
@@ -299,15 +292,9 @@ int xorscura_compare(struct xod *data){
 	int i;
 	char tmp_char;
 
-	if(!(data->seed || data->key_buf)){
-#ifdef DEBUG
-		fprintf(stderr, "xorscura_compare(): No key or seed provided.\n");
-#endif
-		return(-1);
-	}
 
 	// Check if we have the prng case, or straight xor of arrays.
-	if(data->seed){
+	if(!data->key_buf){
 		return(xorscura_compare_prng(data));
 	}
 
