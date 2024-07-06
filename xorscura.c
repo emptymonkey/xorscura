@@ -32,7 +32,7 @@
 
 void usage(){
 
-	fprintf(stderr, "usage(): %s [-e|-d|-x|-h] [-C] [-p PLAINTEXT] [-c CIPHERTEXT] [-k KEY] [-s SEED]\n", program_invocation_short_name);
+	fprintf(stderr, "Usage: %s [-e|-d|-x|-h] [-C] [-p PLAINTEXT] [-c CIPHERTEXT] [-k KEY] [-s SEED]\n", program_invocation_short_name);
 	fprintf(stderr, "\t-e\t:\tEncrypt. (Requires PLAINTEXT and KEY.)\n");
 	fprintf(stderr, "\t-d\t:\tDecrypt. (Requires CIPHERTEXT and KEY.)\n");
 	fprintf(stderr, "\t-x\t:\tCompare. (Requires PLAINTEXT, CIPHERTEXT, and KEY.)\n");
